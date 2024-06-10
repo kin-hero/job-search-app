@@ -6,6 +6,7 @@ import {
   ScrollView,
   ActivityIndicator,
   RefreshControl,
+  Share,
 } from "react-native";
 import { Stack, useRouter, useLocalSearchParams } from "expo-router";
 import {
@@ -18,6 +19,7 @@ import {
 } from "../../components";
 import { COLORS, icons, SIZES } from "../../constants";
 import useFetch from "../../hook/useFetch";
+// import * as Sharing from "expo-sharing";
 
 const tabs = ["About", "Qualifications", "Responsibilities"];
 
@@ -26,10 +28,15 @@ const jobDetails = () => {
   const router = useRouter();
 
   const { data, isLoading, error, reFetch } = useFetch("job-details", { job_id: params.id });
+
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState(tabs[0]);
 
-  const onRefresh = () => {};
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    reFetch();
+    setRefreshing(false);
+  }, []);
 
   const displayTabContent = () => {
     switch (activeTab) {
@@ -57,6 +64,32 @@ const jobDetails = () => {
     }
   };
 
+  const pressShare = async () => {
+    console.log("job title", data[0].job_title);
+    console.log("job description", data[0].job_description);
+    console.log("job url", data[0].job_google_link);
+
+    try {
+      const result = await Share.share({
+        title: data[0].job_title,
+        message: data[0].job_description,
+        url: data[0].job_google_link,
+      });
+
+      if (result.action === Share.sharedAction) {
+        if (result.activityType) {
+          console.log("shared with activity type: ", result.activityType);
+        } else {
+          console.log("shared");
+        }
+      } else if (result.action === Share.dismissedAction) {
+        console.log("dismissed");
+      }
+    } catch (error) {
+      console.log("error in sharing to sns", error);
+    }
+  };
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.lightWhite }}>
       <Stack.Screen
@@ -71,7 +104,14 @@ const jobDetails = () => {
               handlePress={() => router.back()}
             />
           ),
-          headerRight: () => <ScreenHeaderBtn iconUrl={icons.share} dimension="60%" />,
+          headerRight: () => (
+            <ScreenHeaderBtn
+              iconUrl={icons.share}
+              dimension="60%"
+              handlePress={pressShare}
+              icon="share"
+            />
+          ),
           headerTitle: "",
         }}
       />
@@ -99,7 +139,10 @@ const jobDetails = () => {
             </View>
           )}
         </ScrollView>
-        <JobFooter url={data[0]?.job_google_link ?? "https://careers.google.com/jobs/results/"} />
+        <JobFooter
+          url={data[0]?.job_google_link ?? "https://careers.google.com/jobs/results/"}
+          id={params.id}
+        />
       </>
     </SafeAreaView>
   );
