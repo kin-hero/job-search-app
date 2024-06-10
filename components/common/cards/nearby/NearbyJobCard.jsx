@@ -5,12 +5,7 @@ import styles from "./nearbyjobcard.style";
 import { checkImageURL } from "../../../../utils";
 const NearbyJobCard = ({ job, handleNavigate }) => {
   return (
-    <TouchableOpacity
-      style={styles.container}
-      onPress={() => {
-        handleNavigate;
-      }}
-    >
+    <TouchableOpacity style={styles.container} onPress={handleNavigate}>
       <TouchableOpacity style={styles.logoContainer}>
         <Image
           source={{
